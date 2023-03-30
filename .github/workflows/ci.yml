@@ -77,6 +77,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Create Release YAML (gatling-operator.yaml)
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          IMAGE_ID=$REGISTRY/$IMAGE_NAME
+          make manifests-release IMG=$IMAGE_ID:$VERSION
       - name: Build and push operator image ${{ steps.get_version.outputs.VERSION }}
         uses: docker/build-push-action@v3
         with:
@@ -84,7 +90,7 @@ jobs:
           tags: cinple/gatling-operator:${{ steps.get_version.outputs.VERSION }}
           build-args: |
             VERSION=${{ steps.get_version.outputs.VERSION }}
-          push: ${{ github.event_name == 'release' && github.event.action == 'created' }} #push only on release
+          push: true
       - name: Build and push gatling-runner ${{ steps.get_version.outputs.VERSION }}
         uses: docker/build-push-action@v3
         with:
@@ -93,7 +99,7 @@ jobs:
           context: ./gatling
           build-args: |
             VERSION=${{ steps.get_version.outputs.VERSION }}
-          push: ${{ github.event_name == 'release' && github.event.action == 'created' }} #push only on release
+          push: true
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
